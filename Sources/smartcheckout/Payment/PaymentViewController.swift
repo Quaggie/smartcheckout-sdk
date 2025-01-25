@@ -5,6 +5,7 @@ final class PaymentViewController: UIViewController {
     private static let webViewMessageName: String = "smartcheckout"
     
     private let sessionKey: String
+    private let onDetentChange: (Float) -> Void
     private let completion: (PaymentSheetResult) -> Void
 
     private let loadingView: UIActivityIndicatorView = {
@@ -40,8 +41,9 @@ final class PaymentViewController: UIViewController {
         return webview
     }()
     
-    public init(sessionKey: String, completion: @escaping (PaymentSheetResult) -> Void) {
+    public init(sessionKey: String, onDetentChange: @escaping (Float) -> Void, completion: @escaping (PaymentSheetResult) -> Void) {
         self.sessionKey = sessionKey
+        self.onDetentChange = onDetentChange
         self.completion = completion
         super.init(nibName: nil, bundle: nil)
         
@@ -60,7 +62,8 @@ final class PaymentViewController: UIViewController {
     }
     
     private func setupWebview() {
-        if let url = URL(string: "https://pr-152.d160dk6e5tokn6.amplifyapp.com/inspira/checkout?sdk=1&partner_division=38-4&code=\(sessionKey)") {
+//        if let url = URL(string: "https://pr-152.d160dk6e5tokn6.amplifyapp.com/inspira/checkout?sdk=1&partner_division=38-4&code=\(sessionKey)") {
+        if let url = URL(string: "http://127.0.0.1:8080") {
             var urlRequest = URLRequest(url: url)
             urlRequest.timeoutInterval = 2
             view.backgroundColor = .white
@@ -103,6 +106,14 @@ extension PaymentViewController: WKScriptMessageHandler {
     func userContentController(_ userContentController: WKUserContentController, didReceive message: WKScriptMessage) {
         if message.name == Self.webViewMessageName {
             guard let body = message.body as? String else { return }
+            
+            if body.localizedStandardContains("detent") {
+                if let detentSubstring = body.split(separator: ":").last, let detent = Float(detentSubstring) {
+                    onDetentChange(detent)
+                }
+                return
+            }
+            
             switch body {
             case "success":
                 completion(.success)
