@@ -11,16 +11,18 @@ public final class PaymentSheet {
     public func present(from viewController: UIViewController, completion: @escaping (PaymentSheetResult) -> Void) {
         let paymentViewController = PaymentViewController(
             sessionKey: sessionKey,
-            onDetentChange: { [self] value in
-                viewController.presentedViewController?.sheetPresentationController?.animateChanges { [self] in
-                    if #available(iOS 16.0, *) {
-                        viewController.presentedViewController?.sheetPresentationController?.detents = [
-                            .custom { context in context.maximumDetentValue * CGFloat(value) }
-                        ]
-                    } else {
-                        viewController.presentedViewController?.sheetPresentationController?.detents = [
-                            value > 0.5 ? .large() : .medium()
-                        ]
+            onDetentChange: { value in
+                if #available(iOS 15.0, *) {
+                    viewController.presentedViewController?.sheetPresentationController?.animateChanges {
+                        if #available(iOS 16.0, *) {
+                            viewController.presentedViewController?.sheetPresentationController?.detents = [
+                                .custom { context in context.maximumDetentValue * CGFloat(value) }
+                            ]
+                        } else {
+                            viewController.presentedViewController?.sheetPresentationController?.detents = [
+                                value > 0.5 ? .large() : .medium()
+                            ]
+                        }
                     }
                 }
             },
